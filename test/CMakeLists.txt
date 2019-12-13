@@ -21,7 +21,7 @@ set(SOURCES_ARITHMETIC_NAMED_TYPE_ALL_TEST ${SOURCES_ARITHMETIC_NAMED_TYPE_MAIN}
 
 add_executable(test.arithmetic_named_type.arithmetic_named_type_test ${SOURCES_ARITHMETIC_NAMED_TYPE_TEST})
 target_link_libraries(test.arithmetic_named_type.arithmetic_named_type_test INTERFACE mem_tracker INTERFACE catch2)
-target_include_directories(test.arithmetic_named_type.arithmetic_named_type_test PRIVATE ${MEM_TRACKER_INCLUDE_PATH} ${CATCH_INCLUDE_PATH})
+target_include_directories(test.arithmetic_named_type.arithmetic_named_type_test PRIVATE ${ARITHMETIC_NAMED_TYPE_INCLUDE_PATH} ${CATCH_INCLUDE_PATH})
 
 add_executable(test.arithmetic_named_type.arithmetic_named_type.all_test ${SOURCES_ARITHMETIC_NAMED_TYPE_ALL_TEST})
 target_link_libraries(test.arithmetic_named_type.arithmetic_named_type.all_test INTERFACE mem_tracker INTERFACE catch2)
