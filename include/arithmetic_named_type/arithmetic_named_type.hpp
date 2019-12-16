@@ -21,8 +21,8 @@ namespace type_util {
     constexpr arithmetic_named_type() noexcept : value_{} {}
     explicit constexpr arithmetic_named_type(T value) noexcept : value_(value) {}
 
-    constexpr operator T&() noexcept { return value_; }
-    constexpr operator const T&() const noexcept { return value_; }
+    constexpr T& get() noexcept { return value_; }
+    constexpr T const& get() const noexcept { return value_; }
 
   private:
     T value_;
@@ -31,9 +31,131 @@ namespace type_util {
   template <typename T>
   struct pre_incrementable : detail::crtp_helper<T, pre_incrementable>
   {
-    T& operator++() {
-      ++this->underlying();
-      return this->underlying();
+    T& operator++() { ++this->underlying().get(); return this->underlying(); }
+  };
+
+  template <typename T>
+  struct post_incrementable : detail::crtp_helper<T, post_incrementable>
+  {
+    const T& operator++(int) { auto tmp = this->underlying().get(); this->underlying().get()++; return tmp; }
+  };
+
+  template <typename T>
+  struct comparable : detail::crtp_helper<T, comparable>
+  {
+    bool operator==(T const& other) const { return this->underlying().get() == other.get(); }
+    bool operator!=(T const& other) const { return !(*this == other); }
+  private:
+    // generates a non-template operator... for this T and this arithmetic_named_type
+    template <typename U>
+    friend bool operator== (U const& y, T const& x)
+    {
+      return T(y).get() == x.get();
+    }
+
+    template <typename U>
+    friend bool operator== (T const& x, U const& y)
+    {
+      return x.get() == T(y).get();
+    }
+
+    friend bool operator== (T const& x, T const& y)
+    {
+      return x.get() == y.get();
+    }
+
+    template <typename U>
+    friend bool operator!= (U const& y, T const& x)
+    {
+      return T(y).get() != x.get();
+    }
+
+    template <typename U>
+    friend bool operator!= (T const& x, U const& y)
+    {
+      return x.get() != T(y).get();
+    }
+
+    friend bool operator!= (T const& x, T const& y)
+    {
+      return x.get() != y.get();
+    }
+  };
+
+  template <typename T>
+  struct orderable : detail::crtp_helper<T, orderable>
+  {
+    bool operator<(T const& other) const  { return this->underlying().get() < other.get(); }
+    bool operator>(T const& other) const  { return other.get() < this->underlying().get(); }
+    bool operator<=(T const& other) const { return !(*this > other); }
+    bool operator>=(T const& other) const { return !(*this < other); }
+  private:
+    template <typename U>
+    friend bool operator< (U const& y, T const& x)
+    {
+      return T(y).get() < x.get();
+    }
+
+    template <typename U>
+    friend bool operator< (T const& x, U const& y)
+    {
+      return x.get() < T(y).get();
+    }
+
+    friend bool operator< (T const& x, T const& y)
+    {
+      return x.get() < y.get();
+    }
+
+    template <typename U>
+    friend bool operator> (U const& y, T const& x)
+    {
+      return T(y).get() > x.get();
+    }
+
+    template <typename U>
+    friend bool operator> (T const& x, U const& y)
+    {
+      return x.get() > T(y).get();
+    }
+
+    friend bool operator> (T const& x, T const& y)
+    {
+      return x.get() > y.get();
+    }
+
+    template <typename U>
+    friend bool operator<= (U const& y, T const& x)
+    {
+      return T(y).get() <= x.get();
+    }
+
+    template <typename U>
+    friend bool operator<= (T const& x, U const& y)
+    {
+      return x.get() <= T(y).get();
+    }
+
+    friend bool operator<= (T const& x, T const& y)
+    {
+      return x.get() <= y.get();
+    }
+
+    template <typename U>
+    friend bool operator>= (U const& y, T const& x)
+    {
+      return T(y).get() >= x.get();
+    }
+
+    template <typename U>
+    friend bool operator>= (T const& x, U const& y)
+    {
+      return x.get() >= T(y).get();
+    }
+
+    friend bool operator>= (T const& x, T const& y)
+    {
+      return x.get() >= y.get();
     }
   };
 }
