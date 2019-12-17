@@ -5,6 +5,9 @@ set(CMAKE_CXX_STANDARD 20)
 add_compile_options("$<$<CONFIG:DEBUG>:-O0;-fno-inline;-g3;-fno-omit-frame-pointer;-fno-stack-protector;-mieee-fp>")
 add_compile_options("$<$<CONFIG:RELEASE>:-O3;-g0;-DNDEBUG>")
 add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:-O2;-g;-DNDEBUG>")
+if(MINGW)
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=lld")
+endif(MINGW)
 
 set(ARITHMETIC_NAMED_TYPE_INCLUDE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
