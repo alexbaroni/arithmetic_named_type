@@ -98,6 +98,8 @@ TEST_CASE("Arithmetic named type use") {
   SECTION("addition") {
     static_assert(has_addition_v<num_value, num_value>);
     static_assert(has_addition_v<num_value, unsigned>);
+    static_assert(is_narrowing_conversion_v<int, unsigned long long>);
+    static_assert(is_narrowing_conversion_v<unsigned long long, unsigned>);
     auto num = num_value{1u};
     auto num2 = num_value{2u};
     num2 += num;
@@ -115,7 +117,7 @@ TEST_CASE("Arithmetic named type use") {
   SECTION("subtraction") {
     static_assert(has_subtraction_v<num_value_s, num_value_s>);
     static_assert(has_subtraction_v<num_value_s, int>);
-    static_assert(is_same_signedness_v<num_value_s::underlying_type , int>);
+
     auto num = num_value_s{2};
     auto num2 = num_value_s{1};
     num2 -= num;

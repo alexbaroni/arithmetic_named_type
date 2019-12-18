@@ -3,39 +3,6 @@
 
 #include <type_traits>
 
-
-#include <iostream>
-#include <map>
-#include <string>
-#include <string_view>
-
-using namespace std::string_literals;
-using namespace std::string_view_literals;
-
-template <typename T>
-constexpr auto type_name()
-{
-  std::string_view name, prefix, suffix;
-#ifdef __clang__
-  name = __PRETTY_FUNCTION__;
-    prefix = "auto type_name() [T = ";
-    suffix = "]";
-#elif defined(__GNUC__)
-  name = __PRETTY_FUNCTION__;
-  prefix = "constexpr auto type_name() [with T = ";
-  suffix = "]";
-#elif defined(_MSC_VER)
-  name = __FUNCSIG__;
-    prefix = "auto __cdecl type_name<";
-    suffix = ">(void)";
-#endif
-  name.remove_prefix(prefix.size());
-  name.remove_suffix(suffix.size());
-  return name;
-}
-
-
-
 namespace type_util {
   template<typename T, typename Tag, template<typename> class... Skills>
   class arithmetic_named_type : public Skills<arithmetic_named_type<T, Tag, Skills...>> ... {
@@ -237,6 +204,9 @@ namespace type_util {
 
     template<typename U>
     T& operator+=(U const& y) {
+      static_assert(
+          !is_narrowing_conversion_v<U, typename detail::crtp_helper<T, addable>::underlying_type::underlying_type>,
+          "addition with narrowing conversion");
       this->underlying().get() += y;
       return this->underlying();
     }
@@ -244,11 +214,17 @@ namespace type_util {
   private:
     template<typename U>
     friend T operator+(T x, U const& y) {
+      static_assert(
+          !is_narrowing_conversion_v<U, typename detail::crtp_helper<T, addable>::underlying_type::underlying_type>,
+          "addition with narrowing conversion");
       return x += y;
     }
 
     template<typename U>
     friend T operator+(U const& y, T x) {
+      static_assert(
+          !is_narrowing_conversion_v<U, typename detail::crtp_helper<T, addable>::underlying_type::underlying_type>,
+          "addition with narrowing conversion");
       return x += y;
     }
 
@@ -265,11 +241,10 @@ namespace type_util {
     }
 
     template<typename U>
-    T& operator-=(U const& y,
-                  typename std::enable_if_t<
-                      is_same_signedness_v<typename detail::crtp_helper<T, subtractable>::underlying_type::underlying_type, U>
-                  >* = 0) {
-         //std::cout << type_name<typename detail::crtp_helper<T, subtractable>::underlying_type::underlying_type>() << " " << type_name<U>() << std::endl;
+    T& operator-=(U const& y) {
+      static_assert(
+        !is_narrowing_conversion_v<U, typename detail::crtp_helper<T, subtractable>::underlying_type::underlying_type>,
+        "subtraction with narrowing conversion");
       this->underlying().get() -= y;
       return this->underlying();
     }
@@ -277,11 +252,17 @@ namespace type_util {
   private:
     template<typename U>
     friend T operator-(T x, U const& y) {
+      static_assert(
+          !is_narrowing_conversion_v<U, typename detail::crtp_helper<T, subtractable>::underlying_type::underlying_type>,
+          "subtraction with narrowing conversion");
       return x -= y;
     }
 
     template<typename U>
     friend T operator-(U const& y, T x) {
+      static_assert(
+          !is_narrowing_conversion_v<U, typename detail::crtp_helper<T, subtractable>::underlying_type::underlying_type>,
+          "subtraction with narrowing conversion");
       return T{y} -= x;
     }
 
