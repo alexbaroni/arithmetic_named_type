@@ -115,11 +115,12 @@ TEST_CASE("Arithmetic named type use") {
   SECTION("subtraction") {
     static_assert(has_subtraction_v<num_value_s, num_value_s>);
     static_assert(has_subtraction_v<num_value_s, int>);
+    static_assert(is_same_signedness_v<num_value_s::underlying_type , int>);
     auto num = num_value_s{2};
     auto num2 = num_value_s{1};
     num2 -= num;
     REQUIRE(num2 == -1);
-    num -= 3u;
+    num -= 3;
     REQUIRE(num == -1);
     auto num3 = num - num2;
     REQUIRE(num3 == 0);

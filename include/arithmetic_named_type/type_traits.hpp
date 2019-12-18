@@ -144,14 +144,17 @@ namespace type_util {
   };
 
   template<typename From, typename To>
-  inline constexpr bool is_narrowing_conversion_v =
-      is_narrowing_conversion<From, To>::value;
+  inline constexpr bool is_narrowing_conversion_v = is_narrowing_conversion<From, To>::value;
+
+  template <class T, class U>
+  struct is_same_signedness
+      : public std::integral_constant<bool, std::is_signed_v<T> == std::is_signed_v<U>>
+  {
+  };
+
+  template <class T, class U>
+  inline constexpr bool is_same_signedness_v = is_same_signedness<T, U>::value;
 }
 
-//template <class T, class U>
-//struct is_same_signedness
-//    : public std::integral_constant<bool, std::is_signed<T>::value == std::is_signed<U>::value>
-//{
-//};
 
 #endif //ARITHMETIC_NAMED_TYPE_TYPE_TRAITS_HPP

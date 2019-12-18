@@ -3,19 +3,40 @@
 
 #include <type_traits>
 
+
+#include <iostream>
+#include <map>
+#include <string>
+#include <string_view>
+
+using namespace std::string_literals;
+using namespace std::string_view_literals;
+
+template <typename T>
+constexpr auto type_name()
+{
+  std::string_view name, prefix, suffix;
+#ifdef __clang__
+  name = __PRETTY_FUNCTION__;
+    prefix = "auto type_name() [T = ";
+    suffix = "]";
+#elif defined(__GNUC__)
+  name = __PRETTY_FUNCTION__;
+  prefix = "constexpr auto type_name() [with T = ";
+  suffix = "]";
+#elif defined(_MSC_VER)
+  name = __FUNCSIG__;
+    prefix = "auto __cdecl type_name<";
+    suffix = ">(void)";
+#endif
+  name.remove_prefix(prefix.size());
+  name.remove_suffix(suffix.size());
+  return name;
+}
+
+
+
 namespace type_util {
-  namespace detail {
-    template<typename T, template<typename> class CRTP>
-    struct crtp_helper {
-      T& underlying() { return static_cast<T&>(*this); }
-      T const& underlying() const { return static_cast<T const&>(*this); }
-
-    private:
-      crtp_helper() {}
-      friend CRTP<T>;
-    };
-  }
-
   template<typename T, typename Tag, template<typename> class... Skills>
   class arithmetic_named_type : public Skills<arithmetic_named_type<T, Tag, Skills...>> ... {
     static_assert(std::is_arithmetic_v<T>, "Requires arithmetic types");
@@ -30,6 +51,19 @@ namespace type_util {
   private:
     T value_;
   };
+
+  namespace detail {
+    template<typename T, template<typename> class CRTP>
+    struct crtp_helper {
+      using underlying_type = T;
+      T& underlying() { return static_cast<T&>(*this); }
+      T const& underlying() const { return static_cast<T const&>(*this); }
+
+    private:
+      crtp_helper() {}
+      friend CRTP<T>;
+    };
+  }
 
   template<typename T>
   struct pre_incrementable : detail::crtp_helper<T, pre_incrementable> {
@@ -231,7 +265,11 @@ namespace type_util {
     }
 
     template<typename U>
-    T& operator-=(U const& y) {
+    T& operator-=(U const& y,
+                  typename std::enable_if_t<
+                      is_same_signedness_v<typename detail::crtp_helper<T, subtractable>::underlying_type::underlying_type, U>
+                  >* = 0) {
+         //std::cout << type_name<typename detail::crtp_helper<T, subtractable>::underlying_type::underlying_type>() << " " << type_name<U>() << std::endl;
       this->underlying().get() -= y;
       return this->underlying();
     }
