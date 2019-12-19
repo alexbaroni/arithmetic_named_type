@@ -128,6 +128,15 @@ namespace type_util {
   template<typename T, typename U>
   constexpr bool has_multiplication_v = has_multiplication<T, U>::value;
 
+  template <class T, class U>
+  struct is_same_signedness
+      : public std::integral_constant<bool, std::is_signed_v<T> == std::is_signed_v<U>>
+  {
+  };
+
+  template <class T, class U>
+  inline constexpr bool is_same_signedness_v = is_same_signedness<T, U>::value;
+
   template<typename T>
   struct identity { using type = T; };
 
@@ -144,16 +153,22 @@ namespace type_util {
   };
 
   template<typename From, typename To>
-  inline constexpr bool is_narrowing_conversion_v = is_narrowing_conversion<From, To>::value;
+  constexpr bool is_narrowing_conversion_v = is_narrowing_conversion<From, To>::value;
 
-  template <class T, class U>
-  struct is_same_signedness
-      : public std::integral_constant<bool, std::is_signed_v<T> == std::is_signed_v<U>>
-  {
-  };
-
-  template <class T, class U>
-  inline constexpr bool is_same_signedness_v = is_same_signedness<T, U>::value;
+  template<typename From, typename To>
+  constexpr bool is_safe_conversion_v() {
+    if constexpr (std::is_floating_point_v<From> && std::is_floating_point_v<To>) {
+      return is_narrowing_conversion_v<From, To>;
+    }
+    else if constexpr (std::is_integral_v<From> && std::is_integral_v<To>) {
+      return (std::is_same_v<std::make_unsigned_t<From>, std::make_unsigned_t<To>> && is_same_signedness_v<From,To>) ||
+             (!std::is_same_v<std::make_unsigned_t<From>, std::make_unsigned_t<To>> &&
+                is_narrowing_conversion_v<From, To>);
+    }
+    else {
+      return is_narrowing_conversion_v<From, To>;
+    }
+  }
 }
 
 
