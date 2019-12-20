@@ -11,13 +11,18 @@ using num_value = arithmetic_named_type<std::size_t, struct num_value_tag,
     decrementable,
     comparable,
     orderable,
-    addable>;
+    mixed_mode_addable>;
 
 using num_value_s = arithmetic_named_type<long, struct num_value_s_tag,
     comparable,
     orderable,
     subtractable,
     multiplicable>;
+
+using num_value_nm = arithmetic_named_type<long, struct num_value_nm_tag,
+    comparable,
+    orderable,
+    addable>;
 
 TEST_CASE("Arithmetic named type use") {
 
@@ -96,22 +101,46 @@ TEST_CASE("Arithmetic named type use") {
   }
 
   SECTION("addition") {
-    static_assert(has_addition_v<num_value, num_value>);
-    static_assert(has_addition_v<num_value, unsigned>);
-    static_assert(is_narrowing_conversion_v<int, unsigned long long>);
-    static_assert(is_narrowing_conversion_v<unsigned long long, unsigned>);
-    static_assert(is_narrowing_conversion_v<unsigned long long, int>);
-    static_assert(!is_narrowing_conversion_v<unsigned, unsigned long long>);
-    static_assert(!is_narrowing_conversion_v<unsigned, unsigned>);
-    static_assert(!is_narrowing_conversion_v<int, int>);
-    static_assert(is_narrowing_conversion_v<long long, unsigned long long>);
-    static_assert(is_narrowing_conversion_v<int, double>);
-    static_assert(is_narrowing_conversion_v<double, int>);
+    static_assert(has_addition_v<num_value_nm>);
+    auto num = num_value_nm{1};
+    auto num2 = num_value_nm{2};
+    num2 += num;
+    REQUIRE(num2 == 3);
+    auto num3 = num + num2;
+    REQUIRE(num3 == 4);
+  }
+
+  SECTION("mixed mode addition") {
+    static_assert(has_mixed_mode_addition_v<num_value, num_value>);
+    static_assert(is_safe_conversion_v<int, unsigned long long>);
+    static_assert(!is_safe_conversion_v<unsigned long long, unsigned>);
+    static_assert(!is_safe_conversion_v<unsigned long, unsigned>);
+    static_assert(!is_safe_conversion_v<unsigned long long, int>);
+    static_assert(is_safe_conversion_v<unsigned, unsigned long long>);
+    static_assert(is_safe_conversion_v<unsigned, unsigned long>);
+    static_assert(is_safe_conversion_v<unsigned, unsigned>);
+    static_assert(is_safe_conversion_v<int, int>);
+    static_assert(!is_safe_conversion_v<long long, unsigned long long>); //!!
+    static_assert(!is_safe_conversion_v<unsigned long long, long long>); //!!
+
+    static_assert(is_safe_conversion_v<int, double>);
+    static_assert(!is_safe_conversion_v<double, int>);
+
+    static_assert(is_safe_conversion_v<float, double>);
+    static_assert(!is_safe_conversion_v<double, float>);
+    static_assert(!is_safe_conversion_v<long double, double>);
+    static_assert(is_safe_conversion_v<double, long double>);
+
+
+    static_assert(is_safe_conversion_v<int, double>);
+    static_assert(!is_safe_conversion_v<double, int>);
+    static_assert(is_safe_conversion_v<double, double>);
+
     auto num = num_value{1u};
     auto num2 = num_value{2u};
     num2 += num;
     REQUIRE(num2 == 3);
-    num += 3l;
+    num += 3;
     REQUIRE(num == 4);
     auto num3 = num + num2;
     REQUIRE(num3 == 7);
@@ -122,8 +151,8 @@ TEST_CASE("Arithmetic named type use") {
   }
 
   SECTION("subtraction") {
-    static_assert(has_subtraction_v<num_value_s, num_value_s>);
-    static_assert(has_subtraction_v<num_value_s, int>);
+    static_assert(has_mixed_mode_subtraction_v<num_value_s, num_value_s>);
+    static_assert(has_mixed_mode_subtraction_v<num_value_s, int>);
 
     auto num = num_value_s{2};
     auto num2 = num_value_s{1};
@@ -140,8 +169,8 @@ TEST_CASE("Arithmetic named type use") {
   }
 
   SECTION("multiplication") {
-    static_assert(has_multiplication_v<num_value_s, num_value_s>);
-    static_assert(has_multiplication_v<num_value_s, int>);
+    static_assert(has_mixed_mode_multiplication_v<num_value_s, num_value_s>);
+    static_assert(has_mixed_mode_multiplication_v<num_value_s, int>);
     auto num = num_value_s{2};
     auto num2 = num_value_s{1};
     num2 *= num;

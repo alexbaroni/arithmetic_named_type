@@ -86,8 +86,19 @@ namespace type_util {
   template<typename T, typename U>
   constexpr bool has_ordering_v = has_ordering<T, U>::value;
 
-  template<typename T, typename U>
+  template<typename T>
   using has_addition_t = std::conjunction<
+      decltype(std::declval<T>() += std::declval<T>()),
+      decltype(std::declval<T>() + std::declval<T>())>;
+
+  template<typename T>
+  using has_addition = std::experimental::is_detected<has_addition_t, T>;
+
+  template<typename T>
+  constexpr bool has_addition_v = has_addition<T>::value;
+
+  template<typename T, typename U>
+  using has_mixed_mode_addition_t = std::conjunction<
       decltype(std::declval<T>() += std::declval<T>()),
       decltype(std::declval<T>() += std::declval<U>()),
       decltype(std::declval<T>() + std::declval<U>()),
@@ -95,13 +106,13 @@ namespace type_util {
       decltype(std::declval<T>() + std::declval<T>())>;
 
   template<typename T, typename U>
-  using has_addition = std::experimental::is_detected<has_addition_t, T, U>;
+  using has_mixed_mode_addition = std::experimental::is_detected<has_mixed_mode_addition_t, T, U>;
 
   template<typename T, typename U>
-  constexpr bool has_addition_v = has_addition<T, U>::value;
+  constexpr bool has_mixed_mode_addition_v = has_mixed_mode_addition<T, U>::value;
 
   template<typename T, typename U>
-  using has_subtraction_t = std::conjunction<
+  using has_mixed_mode_subtraction_t = std::conjunction<
       decltype(std::declval<T>() -= std::declval<T>()),
       decltype(std::declval<T>() -= std::declval<U>()),
       decltype(std::declval<T>() - std::declval<U>()),
@@ -109,13 +120,13 @@ namespace type_util {
       decltype(std::declval<T>() - std::declval<T>())>;
 
   template<typename T, typename U>
-  using has_subtraction = std::experimental::is_detected<has_subtraction_t, T, U>;
+  using has_mixed_mode_subtraction = std::experimental::is_detected<has_mixed_mode_subtraction_t, T, U>;
 
   template<typename T, typename U>
-  constexpr bool has_subtraction_v = has_subtraction<T, U>::value;
+  constexpr bool has_mixed_mode_subtraction_v = has_mixed_mode_subtraction<T, U>::value;
 
   template<typename T, typename U>
-  using has_multiplication_t = std::conjunction<
+  using has_mixed_mode_multiplication_t = std::conjunction<
       decltype(std::declval<T>() *= std::declval<T>()),
       decltype(std::declval<T>() *= std::declval<U>()),
       decltype(std::declval<T>() * std::declval<U>()),
@@ -123,20 +134,18 @@ namespace type_util {
       decltype(std::declval<T>() * std::declval<T>())>;
 
   template<typename T, typename U>
-  using has_multiplication = std::experimental::is_detected<has_multiplication_t, T, U>;
+  using has_mixed_mode_multiplication = std::experimental::is_detected<has_mixed_mode_multiplication_t, T, U>;
 
   template<typename T, typename U>
-  constexpr bool has_multiplication_v = has_multiplication<T, U>::value;
+  constexpr bool has_mixed_mode_multiplication_v = has_mixed_mode_multiplication<T, U>::value;
 
   template <class T, class U>
   struct is_same_signedness
-      : public std::integral_constant<bool, std::is_signed_v<T> == std::is_signed_v<U>>
-  {
-  };
+      : public std::integral_constant<bool, std::is_signed_v<T> == std::is_signed_v<U>> {};
 
   template <class T, class U>
-  inline constexpr bool is_same_signedness_v = is_same_signedness<T, U>::value;
-
+  constexpr bool is_same_signedness_v = is_same_signedness<T, U>::value;
+/*
   template<typename T>
   struct identity { using type = T; };
 
@@ -154,21 +163,28 @@ namespace type_util {
 
   template<typename From, typename To>
   constexpr bool is_narrowing_conversion_v = is_narrowing_conversion<From, To>::value;
+  */
+  template<typename From, typename To>
+  struct is_safe_conversion :
+      public std::integral_constant<bool,
+        std::is_same_v<std::decay_t<To>, std::decay_t<From>> ||
+        std::is_same_v<std::decay_t<To>, typename std::common_type_t<std::decay_t<To>, std::decay_t<From>>>> {};
 
   template<typename From, typename To>
-  constexpr bool is_safe_conversion_v() {
-    if constexpr (std::is_floating_point_v<From> && std::is_floating_point_v<To>) {
-      return is_narrowing_conversion_v<From, To>;
-    }
-    else if constexpr (std::is_integral_v<From> && std::is_integral_v<To>) {
-      return (std::is_same_v<std::make_unsigned_t<From>, std::make_unsigned_t<To>> && is_same_signedness_v<From,To>) ||
-             (!std::is_same_v<std::make_unsigned_t<From>, std::make_unsigned_t<To>> &&
-                is_narrowing_conversion_v<From, To>);
+  constexpr bool is_safe_conversion_() {
+    using from_t = std::decay_t<From>;
+    using to_t = std::decay_t<To>;
+    if constexpr (std::is_integral_v<From> && std::is_integral_v<To>) {
+      return std::is_same_v<from_t, to_t> ||
+          (!std::is_same_v<std::make_unsigned_t<from_t>, std::make_unsigned_t<to_t>> &&
+              is_safe_conversion<From, To>::value);
     }
     else {
-      return is_narrowing_conversion_v<From, To>;
+      return is_safe_conversion<From, To>::value;
     }
   }
+  template<typename From, typename To>
+  constexpr bool is_safe_conversion_v = is_safe_conversion_<From, To>();
 }
 
 

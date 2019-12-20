@@ -202,21 +202,25 @@ namespace type_util {
       return this->underlying();
     }
 
+  private:
+    friend T operator+(T x, T const& y) {
+      return x += y;
+    }
+  };
+
+  template<typename T>
+  struct mixed_mode_addable : detail::crtp_helper<T, mixed_mode_addable> {
+    T& operator+=(T const& y) {
+      this->underlying().get() += y.get();
+      return this->underlying();
+    }
+
     template<typename U>
     T& operator+=(U const& y) {
-      static_assert((std::is_same_v<
-                        std::make_unsigned_t<typename detail::crtp_helper<T, addable>::underlying_type::underlying_type>,
-                        std::make_unsigned_t<U>> &&
-                     is_same_signedness_v<
-                         typename detail::crtp_helper<T, addable>::underlying_type::underlying_type,
-                         U>) ||
-                    (!std::is_same_v<
-                        std::make_unsigned_t<typename detail::crtp_helper<T, addable>::underlying_type::underlying_type>,
-                        std::make_unsigned_t<U>> &&
-                    is_narrowing_conversion_v<
-                        typename detail::crtp_helper<T, addable>::underlying_type::underlying_type,
-                        U>),
-                    "addition with narrowing conversion");
+      static_assert(
+        is_safe_conversion_v<U,
+          typename detail::crtp_helper<T, mixed_mode_addable>::underlying_type::underlying_type>,
+          "addition with unsafe conversion detected");
       this->underlying().get() += y;
       return this->underlying();
     }
@@ -224,37 +228,19 @@ namespace type_util {
   private:
     template<typename U>
     friend T operator+(T x, U const& y) {
-      static_assert((std::is_same_v<
-                        std::make_unsigned_t<typename detail::crtp_helper<T, addable>::underlying_type::underlying_type>,
-                        std::make_unsigned_t<U>> &&
-                     is_same_signedness_v<
-                         typename detail::crtp_helper<T, addable>::underlying_type::underlying_type,
-                         U>) ||
-                    (!std::is_same_v<
-                        std::make_unsigned_t<typename detail::crtp_helper<T, addable>::underlying_type::underlying_type>,
-                        std::make_unsigned_t<U>> &&
-                     is_narrowing_conversion_v<
-                         typename detail::crtp_helper<T, addable>::underlying_type::underlying_type,
-                         U>),
-                    "addition with narrowing conversion");
+      static_assert(
+          is_safe_conversion_v<U,
+              typename detail::crtp_helper<T, mixed_mode_addable>::underlying_type::underlying_type>,
+          "addition with unsafe conversion detected");
       return x += y;
     }
 
     template<typename U>
     friend T operator+(U const& y, T x) {
-      static_assert((std::is_same_v<
-                        std::make_unsigned_t<typename detail::crtp_helper<T, addable>::underlying_type::underlying_type>,
-                        std::make_unsigned_t<U>> &&
-                     is_same_signedness_v<
-                         typename detail::crtp_helper<T, addable>::underlying_type::underlying_type,
-                         U>) ||
-                    (!std::is_same_v<
-                        std::make_unsigned_t<typename detail::crtp_helper<T, addable>::underlying_type::underlying_type>,
-                        std::make_unsigned_t<U>> &&
-                     is_narrowing_conversion_v<
-                         typename detail::crtp_helper<T, addable>::underlying_type::underlying_type,
-                         U>),
-                    "addition with narrowing conversion");
+      static_assert(
+          is_safe_conversion_v<U,
+              typename detail::crtp_helper<T, mixed_mode_addable>::underlying_type::underlying_type>,
+          "addition with unsafe conversion detected");
       return x += y;
     }
 
@@ -272,9 +258,6 @@ namespace type_util {
 
     template<typename U>
     T& operator-=(U const& y) {
-      static_assert(
-        !is_narrowing_conversion_v<U, typename detail::crtp_helper<T, subtractable>::underlying_type::underlying_type>,
-        "subtraction with narrowing conversion");
       this->underlying().get() -= y;
       return this->underlying();
     }
@@ -282,17 +265,11 @@ namespace type_util {
   private:
     template<typename U>
     friend T operator-(T x, U const& y) {
-      static_assert(
-          !is_narrowing_conversion_v<U, typename detail::crtp_helper<T, subtractable>::underlying_type::underlying_type>,
-          "subtraction with narrowing conversion");
       return x -= y;
     }
 
     template<typename U>
     friend T operator-(U const& y, T x) {
-      static_assert(
-          !is_narrowing_conversion_v<U, typename detail::crtp_helper<T, subtractable>::underlying_type::underlying_type>,
-          "subtraction with narrowing conversion");
       return T{y} -= x;
     }
 
