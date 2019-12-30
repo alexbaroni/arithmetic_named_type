@@ -1,6 +1,5 @@
 #include "catch.hpp"
 
-#include <iterator>
 #include "arithmetic_named_type/type_traits.hpp"
 #include "arithmetic_named_type/arithmetic_named_type.hpp"
 
