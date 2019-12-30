@@ -1,3 +1,4 @@
+#include <sstream>
 #include "catch.hpp"
 
 #include "arithmetic_named_type/type_traits.hpp"
@@ -27,7 +28,8 @@ using num_value_s = arithmetic_named_type<long, struct num_value_s_tag,
     mixed_mode_divisible,
     bitwise_not,
     logical_not,
-    implicitly_convertible_to<int>::conv_op>;
+    implicitly_convertible_to<int>::conv_op,
+    hashable>;
 
 using num_value_nm = arithmetic_named_type<long, struct num_value_nm_tag,
     mixed_mode_comparable,
@@ -250,7 +252,7 @@ TEST_CASE("Arithmetic named type use") {
     REQUIRE(num == -1);
     auto num3 = num - num2;
     REQUIRE(num3 == 0);
-    auto num4 = num - 2u;
+    auto num4 = num - 2;
     REQUIRE(num4 == -3);
     auto num5 = 2l - num;
     REQUIRE(num5 == 3);
@@ -512,6 +514,27 @@ TEST_CASE("Arithmetic named type use") {
     auto add_one = [](int i) { return ++i; };
     auto num = num_value_s{22};
     REQUIRE(add_one(num) == 23);
+  }
+
+  SECTION("printable to") {
+    std::ostringstream oss;
+    auto num = num_value_s{22};
+    STATIC_REQUIRE(std::is_convertible_v<num_value_s, long>);
+    oss << num;
+    REQUIRE(oss.str() == "22");
+  }
+
+  SECTION("hash")
+  {
+    std::unordered_map<num_value_s, int> hash_map = {
+        {num_value_s{1}, 10},
+        {num_value_s{2}, 20}
+    };
+    num_value_s cc3{3};
+    hash_map[cc3] = 30;
+    REQUIRE(hash_map[num_value_s{1}] == 10);
+    REQUIRE(hash_map[num_value_s{2}] == 20);
+    REQUIRE(hash_map[num_value_s{3}] == 30);
   }
 }
 

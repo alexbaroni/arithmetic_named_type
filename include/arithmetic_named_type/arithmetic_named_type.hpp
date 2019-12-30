@@ -36,5 +36,23 @@ namespace type_util {
       }
     };
   };
+
+  template<typename T>
+  struct hashable {
+    static constexpr bool is_hashable = true;
+  };
+}
+
+namespace std {
+  template<typename T, typename Tag, template<typename> class... Skills>
+  struct hash<type_util::arithmetic_named_type<T, Tag, Skills...>> {
+    using named_type = type_util::arithmetic_named_type<T, Tag, Skills...>;
+    using check_if_hashable = typename std::enable_if<named_type::is_hashable, void>::type;
+
+    size_t operator()(type_util::arithmetic_named_type<T, Tag, Skills...> const& x) const {
+      return std::hash<T>()(x.get());
+    }
+  };
+
 }
 #endif //ARITHMETIC_NAMED_TYPE_HPP
